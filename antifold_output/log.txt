@@ -1,0 +1,7 @@
+[2025-03-17 14:19:18,595] Running inverse folding on PDB/CIFs ...
+[2025-03-17 14:19:19,409] Loaded model to cuda.
+[2025-03-17 14:19:19,410] NOTE: Custom chain mode enabled. Will run specified chain(s).
+[2025-03-17 14:19:19,410] Reading in (1) PDBs from DataFrame
+[2025-03-17 14:19:19,467] Predicting batch 1/1: PDBs 1-1 out of 1 total
+[2025-03-17 14:19:19,721] Saving 1 CSVs to antifold_output
+[2025-03-17 14:19:19,722] Writing 3hfm_HLY per-residue log probs CSV to antifold_output/3hfm_HLY.csv
