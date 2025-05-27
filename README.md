@@ -5,7 +5,7 @@ AntiFold predicts sequences which fit into antibody variable domain structures. 
 
 AntiFold is based on the ESM-IF1 model and is fine-tuned on solved and predicted antibody structures from SAbDab and OAS.
 
-- Paper: [arXiv pre-print](https://arxiv.org/abs/2405.03370)
+- Paper: [Bioinformatics Advances](https://academic.oup.com/bioinformaticsadvances/article/5/1/vbae202/8090019)
 - Webserver: [OPIG webserver](https://opig.stats.ox.ac.uk/webapps/antifold/)
 - Colab: [![Open In Colab](images/colab-badge.svg)](https://colab.research.google.com/drive/1oEDJCHcwxGBeCiYsCm62_OHBXDHnlhb9)
 - Model: [model.pt](https://opig.stats.ox.ac.uk/data/downloads/AntiFold/models/model.pt)
@@ -15,6 +15,20 @@ AntiFold is based on the ESM-IF1 model and is fine-tuned on solved and predicted
 
 To try AntiFold without installing it, please see our OPIG webserver:
 [https://opig.stats.ox.ac.uk/webapps/antifold/](https://opig.stats.ox.ac.uk/webapps/antifold/)
+
+## Features
+- Antibody (+ antigen) probabilities and sequence sampling
+- Nanobody (+ antigen) probabilities and sequence sampling
+- Sampling of residues from specified IMGT regions. Nb: assumes antibody is IMGT numbered! (See --num_seq_per_target and --regions)
+- Supports use of AntiFold fine-tuned weights and ESM-IF1 pre-trained weights (See --esm_if1_mode)
+- Extraction of per-residue inverse-folding embeddings (See --extract_embeddings)
+- GPU and MacBook GPU (MPS) accelerated predictions
+
+## Input
+- Input should be either a paired variable domain structure (VH/VL) antibody or nanobody (VHH) (--nanobody_mode)
+- AntiFold assumes the first PDB chain is the heavy chain, and second the light chain, unless manually specified by the user (See --pdbs_csv, --heavy_chain, --light_chain options)
+- Antigen chains can optionally be specified. We recommend only including a single, ideally small, antigen chain. (See --pdbs_csv or --antigen_chain options)
+- Sequence sampling assumes PDBs have been IMGT numbered. You can find IMGT numbered PDBs on [SAbDab](https://opig.stats.ox.ac.uk/webapps/sabdab-sabpred/sabdab), or re-number PDBs with [ANARCI](https://github.com/oxpig/ANARCI)
 
 ## Install and run AntiFold
 
@@ -36,7 +50,7 @@ python -m pip install .
 Depending on your CUDA version you may need to change the dependency `pytorch-cuda=12.1` in the environment.yml file.
 Detailed instructions on how to correctly install pytorch for your system can be found [here](https://pytorch.org/get-started/locally/)
 
-#### Run AntiFold (inverse-folding probabilities, sample sequences)
+#### Run AntiFold (inverse-folding probabilities, sample sequences on IMGT-numbered PDBs)
 ```bash
 # Run AntiFold on single PDB/CIF file
 # Nb: Assumes first chain heavy, second chain light
@@ -66,6 +80,7 @@ python antifold/main.py \
     --pdbs_csv data/antibody_antigen.csv
 
 # Sample sequences 10x (paired VH/VL only)
+# Note: Requires IMGT numbered PDBs (e.g. from SAbDab or numbered with ANARCI)
 python antifold/main.py \
     --pdb_file data/pdbs/6y1l_imgt.pdb \
     --heavy_chain H \
@@ -238,28 +253,37 @@ IMGT_dict = {
     "all": range(1, 128 + 1),
     "allH": range(1, 128 + 1),
     "allL": range(1, 128 + 1),
-    "FWH": list(range(1, 26 + 1)) + list(range(40, 55 + 1)) + list(range(66, 104 + 1)),
-    "FWL": list(range(1, 26 + 1)) + list(range(40, 55 + 1)) + list(range(66, 104 + 1)),
-    "CDRH": list(range(27, 39)) + list(range(56, 65 + 1)) + list(range(105, 117 + 1)),
-    "CDRL": list(range(27, 39)) + list(range(56, 65 + 1)) + list(range(105, 117 + 1)),
+
+    "FWH": list(range(1, 26 + 1)) + list(range(39, 55 + 1)) + list(range(66, 104 + 1)) + list(range(118, 128 + 1)),
+    "FWL": list(range(1, 26 + 1)) + list(range(39, 55 + 1)) + list(range(66, 104 + 1)) + list(range(118, 128 + 1)),
+
+    "CDRH": list(range(27, 38 + 1)) + list(range(56, 65 + 1)) + list(range(105, 117 + 1)),
+    "CDRL": list(range(27, 38 + 1)) + list(range(56, 65 + 1)) + list(range(105, 117 + 1)),
+
     "FW1": range(1, 26 + 1),
     "FWH1": range(1, 26 + 1),
     "FWL1": range(1, 26 + 1),
-    "CDR1": range(27, 39),
-    "CDRH1": range(27, 39),
-    "CDRL1": range(27, 39),
-    "FW2": range(40, 55 + 1),
-    "FWH2": range(40, 55 + 1),
-    "FWL2": range(40, 55 + 1),
+
+    "CDR1": range(27, 38 + 1),
+    "CDRH1": range(27, 38 + 1),
+    "CDRL1": range(27, 38 + 1),
+
+    "FW2": range(39, 55 + 1),
+    "FWH2": range(39, 55 + 1),
+    "FWL2": range(39, 55 + 1),
+
     "CDR2": range(56, 65 + 1),
     "CDRH2": range(56, 65 + 1),
     "CDRL2": range(56, 65 + 1),
+
     "FW3": range(66, 104 + 1),
     "FWH3": range(66, 104 + 1),
     "FWL3": range(66, 104 + 1),
+
     "CDR3": range(105, 117 + 1),
     "CDRH3": range(105, 117 + 1),
     "CDRL3": range(105, 117 + 1),
+
     "FW4": range(118, 128 + 1),
     "FWH4": range(118, 128 + 1),
     "FWL4": range(118, 128 + 1),
